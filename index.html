@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PRISM — AI-Based Landslide Early Warning & Risk Monitoring Platform for NER</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome & Lucide Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="dark-theme">
+  <!-- Top Global Header -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="brand-badge">
+        <div class="prism-logo">
+          <i class="fa-solid fa-mountain-sun"></i>
+        </div>
+        <div class="brand-text">
+          <div class="brand-name">
+            <span class="gradient-text">PRISM</span>
+            <span class="version-tag">NER v2.4</span>
+          </div>
+          <span class="brand-sub">Predictive Risk Intelligence for North Eastern Region</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Telemetry Status Bar -->
+    <div class="header-center">
+      <div class="sih-meta-tag">
+        <span class="sih-pill"><i class="fa-solid fa-award"></i> SIH 2026</span>
+        <span class="ps-pill">PS ID: <b>26001</b></span>
+        <span class="ps-theme">Disaster Management (Software)</span>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <div class="status-indicator-group">
+        <div class="indicator online" id="connStatus" title="System Online">
+          <span class="dot"></span>
+          <span class="text">Core Online</span>
+        </div>
+        <div class="indicator" id="sarStatus" title="Microwave C-Band SAR Penetration active">
+          <i class="fa-solid fa-satellite-dish"></i>
+          <span class="text">Sentinel-1 SAR</span>
+        </div>
+        <button class="btn btn-sm btn-offline-toggle" id="toggleOfflineBtn" title="Test Offline-First Capability">
+          <i class="fa-solid fa-wifi"></i> <span id="offlineBtnText">Simulate Offline</span>
+        </button>
+      </div>
+      <button class="btn btn-danger btn-broadcast-top" id="topEmergencyBtn">
+        <i class="fa-solid fa-triangle-exclamation"></i> Emergency Broadcast
+      </button>
+    </div>
+  </header>
+
+  <!-- Navigation Bar -->
+  <nav class="main-nav">
+    <div class="nav-container">
+      <button class="nav-tab active" data-tab="tab-dashboard">
+        <i class="fa-solid fa-earth-asia"></i> GIS Command Center
+      </button>
+      <button class="nav-tab" data-tab="tab-ai-engine">
+        <i class="fa-solid fa-brain"></i> PRISM AI Engine & Trajectory
+      </button>
+      <button class="nav-tab" data-tab="tab-early-warning">
+        <i class="fa-solid fa-bullhorn"></i> Early Warning & Alerts
+        <span class="badge-count" id="activeAlertCount">3</span>
+      </button>
+      <button class="nav-tab" data-tab="tab-field-reports">
+        <i class="fa-solid fa-clipboard-check"></i> Field Ground Truth & Verification
+      </button>
+      <button class="nav-tab" data-tab="tab-methodology">
+        <i class="fa-solid fa-diagram-project"></i> 8-Step Architecture & Tech Stack
+      </button>
+      <button class="nav-tab" data-tab="tab-impact">
+        <i class="fa-solid fa-chart-line"></i> Impact & Research References
+      </button>
+    </div>
+  </nav>
+
+  <!-- Metric Quick Ribbon -->
+  <div class="telemetry-ribbon">
+    <div class="metric-item">
+      <span class="metric-label"><i class="fa-solid fa-map-pin"></i> Monitored NER Zones</span>
+      <span class="metric-value" id="valMonitored">7 Critical Sectors</span>
+    </div>
+    <div class="metric-divider"></div>
+    <div class="metric-item warning-text">
+      <span class="metric-label"><i class="fa-solid fa-triangle-exclamation"></i> Critical Red Hotspots</span>
+      <span class="metric-value font-bold text-danger" id="valCritical">2 Immediate Risk</span>
+    </div>
+    <div class="metric-divider"></div>
+    <div class="metric-item">
+      <span class="metric-label"><i class="fa-solid fa-road-barrier"></i> Threatened Lifelines</span>
+      <span class="metric-value" id="valHighways">NH-10, NH-29, NH-27</span>
+    </div>
+    <div class="metric-divider"></div>
+    <div class="metric-item">
+      <span class="metric-label"><i class="fa-solid fa-cloud-showers-heavy"></i> Peak 24h Rainfall</span>
+      <span class="metric-value text-accent" id="valRain">165.0 mm (Cherrapunji)</span>
+    </div>
+    <div class="metric-divider"></div>
+    <div class="metric-item">
+      <span class="metric-label"><i class="fa-solid fa-users"></i> Exposed Population Buffer</span>
+      <span class="metric-value" id="valPopulation">61,800 Citizens</span>
+    </div>
+    <div class="metric-divider"></div>
+    <div class="metric-item">
+      <span class="metric-label"><i class="fa-solid fa-satellite"></i> Cloud-Penetrating Sensor</span>
+      <span class="metric-value text-success"><i class="fa-solid fa-check"></i> SAR Microwave Active</span>
+    </div>
+  </div>
+
+  <!-- Main Content Container -->
+  <main class="main-content">
+    
+    <!-- TAB 1: GIS COMMAND CENTER -->
+    <section class="tab-pane active" id="tab-dashboard">
+      <div class="gis-grid">
+        <!-- Interactive Map Container -->
+        <div class="map-card">
+          <div class="map-header">
+            <div class="map-title-group">
+              <span class="live-dot"></span>
+              <h3>North Eastern Region (NER) Live Landslide Risk & Infrastructure Map</h3>
+            </div>
+            
+            <div class="map-controls">
+              <div class="layer-toggle-group">
+                <button class="layer-btn active" data-layer="risk">
+                  <i class="fa-solid fa-triangle-exclamation"></i> Risk Polygons
+                </button>
+                <button class="layer-btn active" data-layer="highways">
+                  <i class="fa-solid fa-road"></i> Highways & Rail
+                </button>
+                <button class="layer-btn active" data-layer="rainfall">
+                  <i class="fa-solid fa-cloud-rain"></i> Rainfall Heatmap
+                </button>
+                <button class="layer-btn" data-layer="historical">
+                  <i class="fa-solid fa-clock-rotate-left"></i> GSI History
+                </button>
+                <button class="layer-btn active" data-layer="field">
+                  <i class="fa-solid fa-street-view"></i> Field Reports
+                </button>
+              </div>
+              <button class="btn btn-sm btn-outline" id="resetMapBtn" title="Reset View to NER">
+                <i class="fa-solid fa-arrows-to-eye"></i> Focus NER
+              </button>
+            </div>
+          </div>
+
+          <!-- Leaflet Map Canvas -->
+          <div id="nerMap" class="map-viewport"></div>
+
+          <!-- Map Legend Overlay -->
+          <div class="map-legend">
+            <h4>Risk Severity Scale</h4>
+            <div class="legend-row">
+              <span class="legend-color critical"></span>
+              <span class="legend-text">Critical (>80%) - Immediate Hazard</span>
+            </div>
+            <div class="legend-row">
+              <span class="legend-color high"></span>
+              <span class="legend-text">High (60-80%) - High Vigilance</span>
+            </div>
+            <div class="legend-row">
+              <span class="legend-color moderate"></span>
+              <span class="legend-text">Moderate (40-60%) - Advisory</span>
+            </div>
+            <div class="legend-row">
+              <span class="legend-color low"></span>
+              <span class="legend-text">Low (<40%) - Normal Routine</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hotspot Detail & Live Telemetry Inspector -->
+        <div class="sidebar-card">
+          <div class="card-header">
+            <div class="header-icon"><i class="fa-solid fa-crosshairs"></i></div>
+            <div>
+              <h3>Sector Risk Inspector</h3>
+              <p class="subtitle">Select any hotspot on the map for deep geotechnical analysis</p>
+            </div>
+          </div>
+
+          <div class="inspector-body" id="inspectorContent">
+            <div class="sector-badge-row">
+              <span class="state-badge" id="inspState">Sikkim</span>
+              <span class="risk-badge critical" id="inspRiskBadge">Critical Risk (87.4%)</span>
+            </div>
+            
+            <h2 class="sector-title" id="inspTitle">NH-10 Teesta Valley Corridor</h2>
+            <p class="sector-desc" id="inspGeology">Geology: Daling Series Phyllites & Schists (Highly weathered colluvium)</p>
+
+            <!-- Trajectory Badge -->
+            <div class="trajectory-card">
+              <div class="traj-icon"><i class="fa-solid fa-arrow-trend-up text-danger"></i></div>
+              <div class="traj-details">
+                <span class="traj-label">Risk Trajectory</span>
+                <span class="traj-val text-danger" id="inspTrajectory">Rising (Accelerating Risk)</span>
+                <span class="traj-sub">Soil saturation rate exceeds natural gravity drainage rate</span>
+              </div>
+            </div>
+
+            <!-- Parameters Grid -->
+            <div class="params-grid">
+              <div class="param-box">
+                <span class="param-label">24h Rainfall</span>
+                <span class="param-value text-accent" id="inspRain24">142.5 mm</span>
+              </div>
+              <div class="param-box">
+                <span class="param-label">7-Day Antecedent</span>
+                <span class="param-value text-warning" id="inspRain7d">418.0 mm</span>
+              </div>
+              <div class="param-box">
+                <span class="param-label">Terrain Slope</span>
+                <span class="param-value" id="inspSlope">48.5°</span>
+              </div>
+              <div class="param-box">
+                <span class="param-label">Soil Saturation</span>
+                <span class="param-value text-danger" id="inspSoilMoist">89.2%</span>
+              </div>
+            </div>
+
+            <!-- Threatened Infrastructure Section (From Slide 2) -->
+            <div class="threat-section">
+              <h4><i class="fa-solid fa-road-barrier"></i> Threatened Assets & Infrastructure</h4>
+              <div class="threat-tags" id="inspHighways">
+                <span class="threat-tag highway"><i class="fa-solid fa-road"></i> NH-10 (Sikkim Lifeline)</span>
+                <span class="threat-tag rail"><i class="fa-solid fa-train"></i> Sevoke-Rongpo Rail Link</span>
+              </div>
+              <div class="threat-tags" id="inspVillages">
+                <span class="threat-tag village"><i class="fa-solid fa-house-chimney"></i> Teesta Bazaar (12,800 Pop.)</span>
+                <span class="threat-tag bridge"><i class="fa-solid fa-bridge"></i> BRO Bailey Bridge #4</span>
+              </div>
+            </div>
+
+            <!-- Recommended Actions (From Slide 3) -->
+            <div class="actions-section">
+              <h4><i class="fa-solid fa-list-check"></i> Recommended Emergency Protocols</h4>
+              <ul class="actions-list" id="inspActions">
+                <li><i class="fa-solid fa-circle-exclamation text-danger"></i> Halt commercial and tourist transit on NH-10 immediately.</li>
+                <li><i class="fa-solid fa-route text-warning"></i> Divert traffic via Lava-Gorubathan alternate mountain link.</li>
+                <li><i class="fa-solid fa-person-shelter text-accent"></i> Evacuate 35 vulnerable households along lower riverbank contour.</li>
+              </ul>
+            </div>
+
+            <!-- Action Trigger Buttons -->
+            <div class="inspector-footer">
+              <button class="btn btn-primary btn-full" id="inspTriggerSimBtn">
+                <i class="fa-solid fa-sliders"></i> Load into AI Simulator
+              </button>
+              <button class="btn btn-danger btn-full" id="inspDispatchAlertBtn">
+                <i class="fa-solid fa-tower-broadcast"></i> Dispatch CAP Alert
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: PRISM AI ENGINE & TRAJECTORY SIMULATOR -->
+    <section class="tab-pane" id="tab-ai-engine">
+      <div class="ai-engine-container">
+        <div class="page-intro">
+          <h2><i class="fa-solid fa-brain"></i> PRISM Landslide AI Prediction & Trajectory Engine</h2>
+          <p>
+            Unlike static susceptibility maps, PRISM calculates <b>dynamic probability</b> and <b>risk trajectory</b> by fusing geotechnical slope stability (Mohr-Coulomb shear proxy) with <b>7-day antecedent precipitation saturation</b> and instantaneous rainfall intensity.
+          </p>
+        </div>
+
+        <div class="simulator-layout">
+          <!-- Control Sliders Column -->
+          <div class="sim-panel card">
+            <div class="card-header">
+              <div class="header-icon"><i class="fa-solid fa-sliders"></i></div>
+              <div>
+                <h3>Environmental & Terrain Parameters</h3>
+                <p class="subtitle">Adjust parameters to simulate heavy monsoon or extreme weather events</p>
+              </div>
+            </div>
+
+            <div class="sim-controls">
+              <!-- Preset Selector -->
+              <div class="form-group">
+                <label><i class="fa-solid fa-bookmark"></i> Quick Load NER Preset Scenarios:</label>
+                <select id="simPresetSelect" class="form-select">
+                  <option value="custom">-- Select Scenario Preset --</option>
+                  <option value="nh10_monsoon">Sikkim NH-10 Cloudburst Deluge (Severe Emergency)</option>
+                  <option value="tupul_mudflow">Manipur Tupul Saturated Rail Cutting (Pre-Disaster 2022)</option>
+                  <option value="cherra_runoff">Meghalaya Sohra High-Shear Sandstone (High Runoff)</option>
+                  <option value="dima_premonsoon">Assam Dima Hasao Shale Slope (Rain Deluge)</option>
+                  <option value="dry_post_monsoon">Post-Monsoon Dry Slope Baseline (Low Risk)</option>
+                </select>
+              </div>
+
+              <!-- Slider 1: 24h Rainfall -->
+              <div class="slider-group">
+                <div class="slider-header">
+                  <span class="label"><i class="fa-solid fa-cloud-showers-heavy text-accent"></i> 24-Hour Rainfall Intensity</span>
+                  <span class="slider-val" id="valSliderRain24">85 mm</span>
+                </div>
+                <input type="range" id="inputRain24" min="0" max="250" value="85" step="5" class="custom-slider">
+                <div class="slider-scale">
+                  <span>0 mm (Dry)</span>
+                  <span>100 mm (Heavy)</span>
+                  <span>250 mm (Extreme Deluge)</span>
+                </div>
+              </div>
+
+              <!-- Slider 2: 7-Day Antecedent Rainfall -->
+              <div class="slider-group">
+                <div class="slider-header">
+                  <span class="label"><i class="fa-solid fa-water text-primary"></i> 7-Day Antecedent Rainfall (Soil Saturation)</span>
+                  <span class="slider-val" id="valSliderRain7d">280 mm</span>
+                </div>
+                <input type="range" id="inputRain7d" min="0" max="600" value="280" step="10" class="custom-slider">
+                <div class="slider-scale">
+                  <span>0 mm</span>
+                  <span>300 mm (Critical Saturation)</span>
+                  <span>600 mm (Severe GLOF/Monsoon)</span>
+                </div>
+              </div>
+
+              <!-- Slider 3: Slope Angle -->
+              <div class="slider-group">
+                <div class="slider-header">
+                  <span class="label"><i class="fa-solid fa-mountain text-warning"></i> Terrain Slope Angle</span>
+                  <span class="slider-val" id="valSliderSlope">42°</span>
+                </div>
+                <input type="range" id="inputSlope" min="10" max="75" value="42" step="1" class="custom-slider">
+                <div class="slider-scale">
+                  <span>10° (Gentle)</span>
+                  <span>35° (Threshold Angle)</span>
+                  <span>75° (Cliff Wall)</span>
+                </div>
+              </div>
+
+              <!-- Slider 4: Soil Moisture Saturation -->
+              <div class="slider-group">
+                <div class="slider-header">
+                  <span class="label"><i class="fa-solid fa-droplet text-info"></i> Soil Moisture Saturation (%)</span>
+                  <span class="slider-val" id="valSliderSoil">75%</span>
+                </div>
+                <input type="range" id="inputSoil" min="10" max="100" value="75" step="1" class="custom-slider">
+                <div class="slider-scale">
+                  <span>10% (Porous)</span>
+                  <span>60% (Moist)</span>
+                  <span>100% (Full Liquefaction)</span>
+                </div>
+              </div>
+
+              <!-- Select: Land Cover / Cut-Slope -->
+              <div class="form-group">
+                <label><i class="fa-solid fa-tree"></i> Land Cover & Anthropogenic Modification:</label>
+                <select id="inputLulc" class="form-select">
+                  <option value="Cut-Slope Road Construction">Cut-Slope Road Excavation (High Shear Stress)</option>
+                  <option value="Unplanned Hill Habitation">Unplanned Hill Settlement & Deforestation</option>
+                  <option value="Degraded Scrub & Shrubland">Degraded Scrub & Overgrazed Slope</option>
+                  <option value="Terraced Agricultural Slopes">Terraced Cultivation / Jhum Agriculture</option>
+                  <option value="Dense Forest / Bamboo Cover">Dense Forest / Deep Bamboo Root Binding</option>
+                </select>
+              </div>
+
+              <!-- Select: Geology Type -->
+              <div class="form-group">
+                <label><i class="fa-solid fa-gem"></i> Lithology / Rock Formation:</label>
+                <select id="inputGeology" class="form-select">
+                  <option value="0.9">Crushed Phyllite / Splintery Shale (Disang/Daling Belt - High Susceptibility)</option>
+                  <option value="0.75">Weathered Tertiary Sandstone & Siltstone (Moderate-High)</option>
+                  <option value="0.6">Karstic Limestone Escarpment (Meghalaya Plateau)</option>
+                  <option value="0.4">Competent Crystalline Granite / Gneiss (High Strength)</option>
+                </select>
+              </div>
+
+              <div class="sim-actions">
+                <button class="btn btn-primary btn-full" id="runSimulationBtn">
+                  <i class="fa-solid fa-calculator"></i> Run AI Model Inference
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Simulation Results Column -->
+          <div class="sim-results-panel card">
+            <div class="card-header">
+              <div class="header-icon"><i class="fa-solid fa-chart-pie"></i></div>
+              <div>
+                <h3>AI Model Output & Explainability</h3>
+                <p class="subtitle">Real-time risk scoring, trajectory prediction, and SHAP-proxy feature attribution</p>
+              </div>
+            </div>
+
+            <!-- Risk Gauge & Trajectory Box -->
+            <div class="prediction-highlight-row">
+              <div class="risk-meter-box">
+                <div class="circular-gauge" id="riskGaugeRing">
+                  <div class="gauge-center">
+                    <span class="gauge-number" id="predRiskScore">74.8%</span>
+                    <span class="gauge-label">Landslide Probability</span>
+                  </div>
+                </div>
+                <div class="gauge-classification" id="predRiskLevelBadge">
+                  <span class="badge badge-lg high">HIGH RISK ALERT</span>
+                </div>
+              </div>
+
+              <div class="trajectory-forecast-box">
+                <h4><i class="fa-solid fa-chart-line"></i> Dynamic Risk Trajectory</h4>
+                <div class="trajectory-state-pill rising" id="predTrajectoryPill">
+                  <i class="fa-solid fa-arrow-trend-up"></i>
+                  <span id="predTrajectoryText">Rising (Accelerating Risk)</span>
+                </div>
+                <p class="traj-explanation" id="predTrajExplanation">
+                  Antecedent rainfall exceeds critical percolation capacity. Additional 24h downpour is converting shear resistance into pore-water pressure.
+                </p>
+
+                <div class="worry-level-tag">
+                  <span>Worry Level:</span>
+                  <b id="predWorryLevel" class="text-warning">High Alert (Level 2)</b>
+                </div>
+
+                <div class="cap-action-tag">
+                  <span>Recommended Response:</span>
+                  <b id="predCapAction" class="text-danger">Prepare Evacuation & Monitor NH Cut Slopes</b>
+                </div>
+              </div>
+            </div>
+
+            <!-- Explainable AI (XAI) Breakdown -->
+            <div class="xai-container">
+              <h4><i class="fa-solid fa-magnifying-glass-chart"></i> Explainable AI (XAI) Feature Attribution Breakdown</h4>
+              <p class="xai-desc">Identifies precisely which environmental and geotechnical factors are driving the hazard:</p>
+              
+              <div class="chart-wrapper">
+                <canvas id="xaiChart" height="180"></canvas>
+              </div>
+            </div>
+
+            <!-- Impacted Infrastructure Preview -->
+            <div class="infrastructure-preview-card">
+              <h4><i class="fa-solid fa-network-wired"></i> Impact Assessment & Threatened Critical Assets</h4>
+              <div class="impact-items-grid">
+                <div class="impact-stat">
+                  <span class="val text-danger" id="predBufferRadius">1.8 km</span>
+                  <span class="lbl">Predicted Hazard Runout Buffer</span>
+                </div>
+                <div class="impact-stat">
+                  <span class="val text-warning" id="predRoadCount">2 Arteries</span>
+                  <span class="lbl">Highways at Interruption Risk</span>
+                </div>
+                <div class="impact-stat">
+                  <span class="val text-accent" id="predVillageCount">3 Settlements</span>
+                  <span class="lbl">Downslope Villages Exposed</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: EARLY WARNING & ALERTS -->
+    <section class="tab-pane" id="tab-early-warning">
+      <div class="alerts-layout">
+        <!-- Live Alerts Feed -->
+        <div class="alerts-feed-card card">
+          <div class="card-header">
+            <div class="header-icon"><i class="fa-solid fa-bullhorn text-danger"></i></div>
+            <div>
+              <h3>Active Multi-Tier Warning Bulletin</h3>
+              <p class="subtitle">NDMA / SDMA synchronized early warnings categorized by severity & impact</p>
+            </div>
+          </div>
+
+          <div class="alerts-list" id="alertsListContainer">
+            <!-- Alert Item 1: RED -->
+            <div class="alert-item critical">
+              <div class="alert-top">
+                <span class="alert-badge red"><i class="fa-solid fa-circle-exclamation"></i> RED ALERT (IMMEDIATE)</span>
+                <span class="alert-time"><i class="fa-regular fa-clock"></i> 25 mins ago</span>
+              </div>
+              <h4 class="alert-title">NH-10 Teesta Valley Mile 29 to Sevoke: Imminent Debris Flow Risk</h4>
+              <p class="alert-msg">
+                7-day cumulative rainfall reached 418mm. Tension crack openings reported along road shoulder. High risk of river blockage and severe highway detachment.
+              </p>
+              <div class="alert-impacts">
+                <span><b>Impacted:</b> NH-10 Lifeline, Teesta Bazaar, Bailey Bridge #4</span>
+                <span><b>Buffer:</b> 2.4 km zone</span>
+              </div>
+              <div class="alert-actions">
+                <button class="btn btn-sm btn-danger" onclick="triggerAlertSimulation('NH-10 Teesta Valley', 'RED')">
+                  <i class="fa-solid fa-satellite-dish"></i> Broadcast Siren & SMS
+                </button>
+                <button class="btn btn-sm btn-outline" onclick="copyCapPayload('NER-SK-01')">
+                  <i class="fa-solid fa-code"></i> Copy CAP XML
+                </button>
+              </div>
+            </div>
+
+            <!-- Alert Item 2: RED -->
+            <div class="alert-item critical">
+              <div class="alert-top">
+                <span class="alert-badge red"><i class="fa-solid fa-circle-exclamation"></i> RED ALERT (IMMEDIATE)</span>
+                <span class="alert-time"><i class="fa-regular fa-clock"></i> 1 hr ago</span>
+              </div>
+              <h4 class="alert-title">Tupul Railway Yard & Ijei River Basin (Manipur): Peak Saturated Mudflow Threat</h4>
+              <p class="alert-msg">
+                Disang flysch sediment cutting experiencing severe seepage. Artificial damming hazard on Ijei river corridor threatening downstream habitations.
+              </p>
+              <div class="alert-impacts">
+                <span><b>Impacted:</b> NH-37, Jiribam-Imphal Railway Works, Marangching</span>
+                <span><b>Buffer:</b> 1.9 km zone</span>
+              </div>
+              <div class="alert-actions">
+                <button class="btn btn-sm btn-danger" onclick="triggerAlertSimulation('Tupul Rail Corridor', 'RED')">
+                  <i class="fa-solid fa-satellite-dish"></i> Broadcast Siren & SMS
+                </button>
+                <button class="btn btn-sm btn-outline" onclick="copyCapPayload('NER-MN-03')">
+                  <i class="fa-solid fa-code"></i> Copy CAP XML
+                </button>
+              </div>
+            </div>
+
+            <!-- Alert Item 3: ORANGE -->
+            <div class="alert-item warning">
+              <div class="alert-top">
+                <span class="alert-badge orange"><i class="fa-solid fa-triangle-exclamation"></i> ORANGE ALERT (HIGH VIGILANCE)</span>
+                <span class="alert-time"><i class="fa-regular fa-clock"></i> 2 hrs ago</span>
+              </div>
+              <h4 class="alert-title">Dima Hasao Hill Section (Lumding-Badarpur Railway Alignment)</h4>
+              <p class="alert-msg">
+                Continuous pre-monsoon precipitation (98mm in 24h). Weathered shale cutting susceptible to shallow translational slides. Rail speed restriction advised.
+              </p>
+              <div class="alert-impacts">
+                <span><b>Impacted:</b> Lumding-Badarpur BG Track, Haflong Outskirts</span>
+                <span><b>Buffer:</b> 1.4 km zone</span>
+              </div>
+              <div class="alert-actions">
+                <button class="btn btn-sm btn-warning" onclick="triggerAlertSimulation('Dima Hasao Corridor', 'ORANGE')">
+                  <i class="fa-solid fa-satellite-dish"></i> Broadcast Advisory
+                </button>
+                <button class="btn btn-sm btn-outline" onclick="copyCapPayload('NER-AS-02')">
+                  <i class="fa-solid fa-code"></i> Copy CAP XML
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Alert Dispatch Simulation Panel -->
+        <div class="alert-dispatcher-card card">
+          <div class="card-header">
+            <div class="header-icon"><i class="fa-solid fa-tower-cell"></i></div>
+            <div>
+              <h3>Multi-Channel Dispatch Simulator</h3>
+              <p class="subtitle">Broadcast realistic alerts across cellular, BRO displays, sirens, and CAP</p>
+            </div>
+          </div>
+
+          <div class="dispatcher-form">
+            <div class="form-group">
+              <label>Target Jurisdiction / Corridor:</label>
+              <select id="dispCorridor" class="form-select">
+                <option value="Sikkim NH-10 Teesta Corridor">Sikkim NH-10 Teesta Corridor (Sevoke to Gangtok)</option>
+                <option value="Manipur NH-37 & Noney Rail Zone">Manipur NH-37 & Noney Rail Zone (Tupul Basin)</option>
+                <option value="Assam Dima Hasao Section">Assam Dima Hasao Section (Haflong-Jatinga)</option>
+                <option value="Nagaland NH-29 Ridge">Nagaland NH-29 Ridge (Kohima-Dimapur)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Alert Severity Level:</label>
+              <div class="severity-radios">
+                <label class="sev-radio red">
+                  <input type="radio" name="dispSev" value="RED" checked>
+                  <span>Red (Evacuate / Halt Traffic)</span>
+                </label>
+                <label class="sev-radio orange">
+                  <input type="radio" name="dispSev" value="ORANGE">
+                  <span>Orange (High Alert / Divert)</span>
+                </label>
+                <label class="sev-radio yellow">
+                  <input type="radio" name="dispSev" value="YELLOW">
+                  <span>Yellow (Advisory Watch)</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Broadcast Channels (Active Multi-Modal):</label>
+              <div class="channels-checkboxes">
+                <label><input type="checkbox" id="chkSms" checked> Cell Broadcast (SMS / Cell Tower Blast)</label>
+                <label><input type="checkbox" id="chkSiren" checked> BRO Hill Highway Smart Siren</label>
+                <label><input type="checkbox" id="chkCap" checked> NDMA Sachet National Portal (CAP v1.2)</label>
+                <label><input type="checkbox" id="chkVms" checked> Variable Message Signs (VMS on Highways)</label>
+              </div>
+            </div>
+
+            <button class="btn btn-danger btn-full btn-lg" id="btnExecuteBroadcast">
+              <i class="fa-solid fa-paper-plane"></i> Execute Multi-Channel Alert Broadcast
+            </button>
+          </div>
+
+          <!-- Simulated Live Output Screen -->
+          <div class="broadcast-live-preview">
+            <h4><i class="fa-solid fa-mobile-screen"></i> Simulated Mobile & Highway Display:</h4>
+            <div class="mock-phone-display" id="mockPhone">
+              <div class="phone-alert-card">
+                <div class="phone-alert-header">
+                  <i class="fa-solid fa-triangle-exclamation text-danger"></i>
+                  <b>EMERGENCY ALERT: NDMA / PRISM</b>
+                </div>
+                <div class="phone-alert-content" id="phoneMsgContent">
+                  [SIKKIM NH-10 RED ALERT]: Landslide probability 87.4%. Tension cracks detected at Mile 29. NH-10 transit halted. Immediate evacuation of lower riverbank settlements underway. Call 1077 for emergency assistance.
+                </div>
+                <div class="phone-alert-time">Issued Just Now • All Mobile Towers in 5km cell radius</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: FIELD GROUND TRUTH & OFFLINE-FIRST VERIFICATION -->
+    <section class="tab-pane" id="tab-field-reports">
+      <div class="field-layout">
+        <!-- Submission Form (Offline-First Ready) -->
+        <div class="field-form-card card">
+          <div class="card-header">
+            <div class="header-icon"><i class="fa-solid fa-camera"></i></div>
+            <div>
+              <h3>Field Truth Ground Verification</h3>
+              <p class="subtitle">Enables BRO patrols, SDRF teams, and local volunteers to submit geo-tagged observations even with <b>zero connectivity</b></p>
+            </div>
+          </div>
+
+          <div class="offline-callout">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+            <div>
+              <b>Offline-First Resilience:</b> When disconnected from cellular network, reports are securely cached in local device storage and automatically synced when back in range.
+            </div>
+          </div>
+
+          <form id="fieldReportForm" class="field-form">
+            <div class="form-row">
+              <div class="form-group col-6">
+                <label>Reporter Name / Unit:</label>
+                <input type="text" id="repName" class="form-input" placeholder="e.g. Sub. B. Tamang" value="Inspector R. Kalita" required>
+              </div>
+              <div class="form-group col-6">
+                <label>Designation / Role:</label>
+                <select id="repRole" class="form-select">
+                  <option value="Border Roads Organisation (BRO)">Border Roads Organisation (BRO)</option>
+                  <option value="SDRF / NDRF First Responder">SDRF / NDRF First Responder</option>
+                  <option value="Local Nodal Officer (DDMA)">Local Nodal Officer (DDMA)</option>
+                  <option value="Community Volunteer">Community Volunteer</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Location / Landmark Description:</label>
+              <input type="text" id="repLocation" class="form-input" placeholder="e.g. NH-10 Mile 31 hairpin bend" value="NH-10 Mile 29 Teesta Valley Slope" required>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group col-6">
+                <label>Latitude:</label>
+                <input type="number" id="repLat" class="form-input" step="0.0001" value="27.1245" required>
+              </div>
+              <div class="form-group col-6">
+                <label>Longitude:</label>
+                <input type="number" id="repLng" class="form-input" step="0.0001" value="88.5132" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <button type="button" class="btn btn-sm btn-outline" id="btnGetLocation">
+                <i class="fa-solid fa-location-crosshairs"></i> Use Current GPS Coordinates
+              </button>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group col-6">
+                <label>Observed Phenomenon:</label>
+                <select id="repObsType" class="form-select">
+                  <option value="Tension cracks on road shoulder (>15cm opening)">Tension Cracks (>15cm opening)</option>
+                  <option value="Slope seepage & dirty spring discharge">Slope Seepage / Dirty Muddy Discharge</option>
+                  <option value="Tree tilting & electric pole misalignment">Tree Tilting / Pole Misalignment</option>
+                  <option value="Minor rockfall / toe bulging">Minor Rockfall & Toe Bulging</option>
+                  <option value="Active rotational slump underway">Active Rotational Slump Underway</option>
+                </select>
+              </div>
+              <div class="form-group col-6">
+                <label>Field Assessed Urgency:</label>
+                <select id="repUrgency" class="form-select">
+                  <option value="Critical">Critical - Road Imminent Danger</option>
+                  <option value="High" selected>High - Immediate Clearing Required</option>
+                  <option value="Moderate">Moderate - Watchful Monitoring</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Detailed Field Observation:</label>
+              <textarea id="repDesc" class="form-textarea" rows="3" placeholder="Describe slope movement, water seepage, rock cracks...">Noticeable road subsidence observed following continuous 48h downpour. Mud slurry flowing onto downhill embankment. Retaining wall showing lateral tilt.</textarea>
+            </div>
+
+            <div class="form-group">
+              <label>Evidence Photo Upload Simulation:</label>
+              <div class="photo-upload-box" id="photoDropArea">
+                <i class="fa-solid fa-camera-retro"></i>
+                <span>Geo-Tagged Image Captured (EXIF GPS embedded)</span>
+                <small>Simulated: Teesta_Valley_Crack_2026.jpg</small>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-full btn-lg">
+              <i class="fa-solid fa-cloud-arrow-up"></i> Submit Ground Verification Report
+            </button>
+          </form>
+        </div>
+
+        <!-- Live Ground Reports Feed -->
+        <div class="field-feed-card card">
+          <div class="card-header">
+            <div class="header-icon"><i class="fa-solid fa-list-check"></i></div>
+            <div>
+              <h3>Verified Ground Reports Feed</h3>
+              <p class="subtitle">AI + Real-World Human-in-the-Loop Field Evidence (Slide 2 Feature)</p>
+            </div>
+          </div>
+
+          <div class="feed-list" id="fieldReportsList">
+            <!-- Populated dynamically via JS -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 5: 8-STEP METHODOLOGY & ARCHITECTURE (From Slide 3) -->
+    <section class="tab-pane" id="tab-methodology">
+      <div class="methodology-container">
+        <div class="page-intro">
+          <h2><i class="fa-solid fa-diagram-project"></i> PRISM Technical Approach & 8-Step Methodology</h2>
+          <p>
+            Direct realization of <b>Slide 3 (SIH Template)</b>: End-to-end data pipeline from multi-source satellite and terrain acquisition to GIS impact analysis and prioritized alert generation.
+          </p>
+        </div>
+
+        <!-- 8-Step Visual Pipeline -->
+        <div class="pipeline-grid">
+          <div class="pipeline-step-card">
+            <div class="step-num">1</div>
+            <div class="step-icon"><i class="fa-solid fa-satellite-dish"></i></div>
+            <h4>Data Acquisition</h4>
+            <ul class="step-items">
+              <li>Microwave SAR (Sentinel-1 cloud-penetrating)</li>
+              <li>High-res Cartosat & USGS DEM (30m/12.5m)</li>
+              <li>IMD Gridded Rainfall & GPM precipitation</li>
+              <li>GSI Historical Landslide Inventory</li>
+            </ul>
+          </div>
+
+          <div class="pipeline-step-card">
+            <div class="step-num">2</div>
+            <div class="step-icon"><i class="fa-solid fa-filter"></i></div>
+            <h4>Data Preprocessing</h4>
+            <ul class="step-items">
+              <li>Missing data imputation (Iterative SVD)</li>
+              <li>Topographic terrain correction & orthorectification</li>
+              <li>Coordinate geo-referencing (EPSG:4326 to WGS84 UTM)</li>
+              <li>Min-max spatial normalization</li>
+            </ul>
+          </div>
+
+          <div class="pipeline-step-card">
+            <div class="step-num">3</div>
+            <div class="step-icon"><i class="fa-solid fa-microchip"></i></div>
+            <h4>Feature Engineering</h4>
+            <ul class="step-items">
+              <li>Rainfall intensity (I) & 7-day antecedent saturation</li>
+              <li>Slope angle, aspect, curvature, and TWI</li>
+              <li>Soil texture & moisture saturation index</li>
+              <li>Lithology shear resistance & cut-slope factors</li>
+            </ul>
+          </div>
+
+          <div class="pipeline-step-card">
+            <div class="step-num">4</div>
+            <div class="step-icon"><i class="fa-solid fa-brain"></i></div>
+            <h4>AI/ML Risk Prediction</h4>
+            <ul class="step-items">
+              <li>Hybrid Ensemble (XGBoost + Random Forest + LSTM)</li>
+              <li>Dynamic Landslide Probability estimation</li>
+              <li>Risk classification (Critical, High, Moderate, Low)</li>
+              <li><b>Risk Trajectory:</b> Accelerating vs Stabilizing</li>
+            </ul>
+          </div>
+
+          <div class="pipeline-step-card">
+            <div class="step-num">5</div>
+            <div class="step-icon"><i class="fa-solid fa-layer-group"></i></div>
+            <h4>GIS Impact Analysis</h4>
+            <ul class="step-items">
+              <li>Buffer & intersection with road network (PostGIS)</li>
+              <li>Critical highway severed detection (NH-10, NH-29)</li>
+              <li>Downslope village & bridge vulnerability index</li>
+              <li>Cascading river damming / flash flood forecast</li>
+            </ul>
+          </div>
+
+          <div class="pipeline-step-card">
+            <div class="step-num">6</div>
+            <div class="step-icon"><i class="fa-solid fa-camera"></i></div>
+            <h4>Field Verification</h4>
+            <ul class="step-items">
+              <li>Geo-tagged photo/video ground evidence</li>
+              <li>Offline-first client cache with auto-sync</li>
+              <li>Human-in-the-loop confidence re-weighting</li>
+              <li>Active learning for sparse Himalayan data</li>
+            </ul>
+          </div>
+
+          <div class="pipeline-step-card">
+            <div class="step-num">7</div>
+            <div class="step-icon"><i class="fa-solid fa-desktop"></i></div>
+            <h4>Dashboard / Alert</h4>
+            <ul class="step-items">
+              <li>Live interactive GIS web interface</li>
+              <li>Color-coded worry level & location pins</li>
+              <li>Actionable mitigation recommendations</li>
+              <li>Multilingual support for NER communities</li>
+            </ul>
+          </div>
+
+          <div class="pipeline-step-card">
+            <div class="step-num">8</div>
+            <div class="step-icon"><i class="fa-solid fa-tower-broadcast"></i></div>
+            <h4>Priority & Alert Engine</h4>
+            <ul class="step-items">
+              <li>Risk + Impact + Confidence prioritization</li>
+              <li>Prevention of alert fatigue via smart throttling</li>
+              <li>CAP v1.2 XML output for NDMA Sachet portal</li>
+              <li>Multi-modal SMS, siren & highway VMS dispatch</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Tech Stack Comparison Card (From Slide 3) -->
+        <div class="tech-stack-section card">
+          <div class="card-header">
+            <div class="header-icon"><i class="fa-solid fa-cubes"></i></div>
+            <div>
+              <h3>PRISM Technology Architecture</h3>
+              <p class="subtitle">Production-ready open-source geo-spatial and machine learning stack</p>
+            </div>
+          </div>
+
+          <div class="tech-grid">
+            <div class="tech-col">
+              <h4><i class="fa-solid fa-globe"></i> Geo-Spatial & Earth Observation</h4>
+              <div class="tech-pill-list">
+                <span class="tech-tag">IMD / GPM Weather APIs</span>
+                <span class="tech-tag">Sentinel-1 C-Band SAR</span>
+                <span class="tech-tag">USGS / Cartosat DEM</span>
+                <span class="tech-tag">PostGIS / GeoPandas</span>
+                <span class="tech-tag">Leaflet & OpenLayers</span>
+              </div>
+            </div>
+
+            <div class="tech-col">
+              <h4><i class="fa-solid fa-robot"></i> Machine Learning & Explainable AI</h4>
+              <div class="tech-pill-list">
+                <span class="tech-tag">Python 3.12</span>
+                <span class="tech-tag">Scikit-learn</span>
+                <span class="tech-tag">XGBoost & LightGBM</span>
+                <span class="tech-tag">CNN-LSTM Time Series</span>
+                <span class="tech-tag">SHAP (Explainable ML)</span>
+              </div>
+            </div>
+
+            <div class="tech-col">
+              <h4><i class="fa-solid fa-server"></i> Platform, Mobile & Core Services</h4>
+              <div class="tech-pill-list">
+                <span class="tech-tag">FastAPI / Python Core</span>
+                <span class="tech-tag">React / Modern Web UI</span>
+                <span class="tech-tag">Flutter Offline-First PWA</span>
+                <span class="tech-tag">CAP v1.2 Protocol</span>
+                <span class="tech-tag">PostgreSQL Spatial DB</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- TAB 6: IMPACT, FEASIBILITY & RESEARCH (From Slides 2, 4, 5, 6) -->
+    <section class="tab-pane" id="tab-impact">
+      <div class="showcase-container">
+        
+        <!-- Slide 2 Comparison: Problem in NER vs PRISM Response -->
+        <div class="card showcase-card">
+          <div class="card-header">
+            <div class="header-icon"><i class="fa-solid fa-scale-balanced"></i></div>
+            <div>
+              <h3>How PRISM Addresses the Landslide Crisis in NER</h3>
+              <p class="subtitle">Direct mapping from SIH Slide 2: Traditional Limitations vs PRISM Innovation</p>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="sih-table">
+              <thead>
+                <tr>
+                  <th style="width: 35%;">Landslide Challenge in NER</th>
+                  <th style="width: 45%;">PRISM Technical Response</th>
+                  <th style="width: 20%;">Innovation & Uniqueness</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><b>Fragmented environmental information</b><br><small class="text-muted">Weather, terrain, and satellite data siloed across agencies</small></td>
+                  <td><span class="badge-success">Multi-Source Data Fusion</span><br>Integrates IMD rainfall, satellite SAR, soil saturation, DEM terrain slope, and GSI historical inventories.</td>
+                  <td>Unified Spatial Geodatabase</td>
+                </tr>
+                <tr>
+                  <td><b>Reactive & manual slope monitoring</b><br><small class="text-muted">Actions taken only after rockfalls or debris breach roads</small></td>
+                  <td><span class="badge-success">AI-Based Dynamic Risk Prediction</span><br>Calculates quantitative probability before slope failure occurs using physics-informed ML.</td>
+                  <td>Predicts Risk Trajectory</td>
+                </tr>
+                <tr>
+                  <td><b>Difficult to know what is threatened</b><br><small class="text-muted">Generic warnings do not specify which roads or bridges will collapse</small></td>
+                  <td><span class="badge-success">GIS Infrastructure Impact Analysis</span><br>Intersects landslide runout polygons with vital lifelines (NH-10, NH-29, rail tunnels, bridges).</td>
+                  <td>Asset-Level Threat Modeling</td>
+                </tr>
+                <tr>
+                  <td><b>Limited ground verification</b><br><small class="text-muted">Sparse sensors across remote rugged Himalayan mountains</small></td>
+                  <td><span class="badge-success">Geo-Tagged Field & Citizen Reports</span><br>Empowers BRO officers, SDRF, and local youth to capture evidence of tension cracks and ground heave.</td>
+                  <td>Human-in-the-Loop AI</td>
+                </tr>
+                <tr>
+                  <td><b>Remote / poor cellular connectivity</b><br><small class="text-muted">Shadow zones in mountain valleys where internet is unavailable</small></td>
+                  <td><span class="badge-success">Offline-First Field Architecture</span><br>Local SQLite/IndexedDB caching; captures geo-tagged photos offline and auto-syncs when online.</td>
+                  <td>Zero-Connectivity Resilient</td>
+                </tr>
+                <tr>
+                  <td><b>Alert overload & fatigue</b><br><small class="text-muted">Broad district-level advisories ignored by local population</small></td>
+                  <td><span class="badge-success">Risk & Impact Prioritization Engine</span><br>Prioritizes alerts by factoring Probability × Vulnerability × Asset Criticality.</td>
+                  <td>Smart Warning Throttling</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Slide 4: Feasibility & Viability & Challenges Grid -->
+        <div class="feasibility-grid">
+          <div class="card f-card">
+            <h4><i class="fa-solid fa-circle-check text-success"></i> Feasibility</h4>
+            <ul>
+              <li><b>Open Datasets & APIs:</b> IMD API, NASA POWER, Sentinel-1/2, USGS 30m DEM, OpenStreetMap roads, GSI Landslide Inventory.</li>
+              <li><b>Open-Source GIS:</b> PostGIS, GeoPandas, Leaflet, QGIS for robust, zero-license-cost deployment.</li>
+              <li><b>Lightweight ML Models:</b> XGBoost & Random Forest optimized for low-compute edge deployment.</li>
+              <li><b>Cloud-Native Architecture:</b> Dockerized microservices ready for AWS / NIC Meghraj cloud.</li>
+            </ul>
+          </div>
+
+          <div class="card f-card">
+            <h4><i class="fa-solid fa-shield-halved text-accent"></i> Viability in NER</h4>
+            <ul>
+              <li><b>Technically Viable:</b> Proven microwave SAR deformation and antecedent rainfall models.</li>
+              <li><b>Operationally Viable:</b> Works seamlessly in low-connectivity mountain passes with multilingual support.</li>
+              <li><b>Socially Viable:</b> Prevents tragic loss of life, displacement, and village isolation.</li>
+              <li><b>Environmentally Viable:</b> Safeguards fragile Himalayan ecology from cascading river dams.</li>
+            </ul>
+          </div>
+
+          <div class="card f-card">
+            <h4><i class="fa-solid fa-wrench text-warning"></i> Challenges & PRISM Solutions</h4>
+            <ul>
+              <li><b>Sparse Ground-Truth in NER:</b> Solved via Transfer Learning + Active Learning with crowd verification.</li>
+              <li><b>Dense Monsoon Cloud Cover:</b> Solved by using <b>Microwave C-band SAR (Sentinel-1)</b> that penetrates clouds.</li>
+              <li><b>False Alarm Mitigation:</b> Solved through Explainable AI + Ensemble voting + human-in-the-loop review.</li>
+              <li><b>Weather Data Latency:</b> Solved via multi-source nowcasting and frequent gridded updates.</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Slide 5: Multi-Stakeholder Impact Matrix -->
+        <div class="card showcase-card">
+          <div class="card-header">
+            <div class="header-icon"><i class="fa-solid fa-users-rays"></i></div>
+            <div>
+              <h3>Multi-Stakeholder Benefits Matrix (Slide 5)</h3>
+              <p class="subtitle">Quantifiable value delivered across civil administration, armed forces, and citizens</p>
+            </div>
+          </div>
+
+          <div class="stakeholder-grid">
+            <div class="stakeholder-box">
+              <div class="st-icon"><i class="fa-solid fa-building-columns"></i></div>
+              <h4>NDMA & State Disaster Authorities</h4>
+              <p>Situational awareness cockpit, data-driven evacuation decisions, and coordinated inter-agency mobilization before disaster strikes.</p>
+            </div>
+            <div class="stakeholder-box">
+              <div class="st-icon"><i class="fa-solid fa-truck-monster"></i></div>
+              <h4>Border Roads Organisation (BRO) & NHAI</h4>
+              <p>Pre-positioning excavators and clearance machinery at high-risk choke points on NH-10 & NH-29; minimizing road blockade hours.</p>
+            </div>
+            <div class="stakeholder-box">
+              <div class="st-icon"><i class="fa-solid fa-person-shelter"></i></div>
+              <h4>Local Communities & Remote Hamlets</h4>
+              <p>Timely localized alerts in local languages; preventing catastrophic nighttime casualties from sudden mudslides.</p>
+            </div>
+            <div class="stakeholder-box">
+              <div class="st-icon"><i class="fa-solid fa-kit-medical"></i></div>
+              <h4>SDRF, NDRF & First Responders</h4>
+              <p>Actionable route maps avoiding blocked mountain passes; accurate hazard runout coordinates for rapid response.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 6: IEEE Research References & Literature Citations -->
+        <div class="card showcase-card">
+          <div class="card-header">
+            <div class="header-icon"><i class="fa-solid fa-book-bookmark"></i></div>
+            <div>
+              <h3>Research Literature & Scientific References (Slide 6)</h3>
+              <p class="subtitle">Academic grounding from leading IEEE Transactions, Remote Sensing, and Big Data Conferences</p>
+            </div>
+          </div>
+
+          <div class="references-list">
+            <div class="ref-item">
+              <span class="ref-num">[1]</span>
+              <div class="ref-text">
+                <b>B. Gao, Y. He, X. Chen, H. Chen, W. Yang, and L. Zhang</b>, “A Deep Neural Network Framework for Landslide Susceptibility Mapping by Considering Time Series Rainfall,” <i>IEEE JSTARS</i>, vol. 17, pp. 5946–5969, 2024. <span class="badge-doi">doi: 10.1109/JSTARS.2024.3370218</span>
+              </div>
+            </div>
+
+            <div class="ref-item">
+              <span class="ref-num">[2]</span>
+              <div class="ref-text">
+                <b>O. Ghorbanzadeh, Y. Xu, P. Ghamisi, M. Kopp, and D. Kreil</b>, “Landslide4Sense: Reference Benchmark Data and Deep Learning Models for Landslide Detection,” <i>IEEE TGRS</i>, vol. 60, Art. no. 5633017, 2022. <span class="badge-doi">doi: 10.1109/TGRS.2022.3215209</span>
+              </div>
+            </div>
+
+            <div class="ref-item">
+              <span class="ref-num">[3]</span>
+              <div class="ref-text">
+                <b>C. Chen and L. Fan</b>, “An Attribution Deep Learning Interpretation Model for Landslide Susceptibility Mapping in the Three Gorges Reservoir Area,” <i>IEEE TGRS</i>, vol. 61, 2023. <span class="badge-doi">doi: 10.1109/TGRS.2023.3323668</span>
+              </div>
+            </div>
+
+            <div class="ref-item">
+              <span class="ref-num">[4]</span>
+              <div class="ref-text">
+                <b>P. Priyanka, P. Kumar, K. V. Uday, and V. Dutt</b>, “Improving Landslide Prediction through LSTM Networks and Antecedent Rainfall: A Case Study in Kamand Valley, India,” in <i>Proc. IEEE ICCCNT</i>, Kamand, India, 2024. <span class="badge-doi">doi: 10.1109/ICCCNT61001.2024.10724729</span>
+              </div>
+            </div>
+
+            <div class="ref-item">
+              <span class="ref-num">[5]</span>
+              <div class="ref-text">
+                <b>R. Kumar, T. Sharma, V. Vaghela, S. K. Jha, and A. Agarwal</b>, “PrecipFormer: Efficient Transformer for Precipitation Downscaling,” in <i>Proc. IEEE/CVF WACVW</i>, 2025. <span class="badge-doi">doi: 10.1109/WACVW65960.2025.00056</span>
+              </div>
+            </div>
+
+            <div class="ref-item">
+              <span class="ref-num">[6]</span>
+              <div class="ref-text">
+                <b>R. Balamurugan, K. Choudhary, and S. P. Raja</b>, “Prediction of Flooding Due to Heavy Rainfall in India Using Machine Learning Algorithms,” <i>IEEE Systems, Man, and Cybernetics Magazine</i>, vol. 8, no. 4, pp. 26–33, 2022.
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Emergency Siren Broadcast Modal (Audio & Visual Simulation) -->
+  <div class="modal-backdrop" id="emergencyModal">
+    <div class="modal-box critical-modal">
+      <div class="modal-header">
+        <div class="modal-icon-pulse"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <div>
+          <h3>EMERGENCY BROADCAST ACTIVATION</h3>
+          <p>Common Alerting Protocol (CAP) Multi-Channel Blast</p>
+        </div>
+        <button class="modal-close-btn" id="closeModalBtn">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="alert-preview-banner">
+          <h4 id="modalSectorName">NH-10 Teesta Valley Corridor (Sikkim)</h4>
+          <span class="badge badge-lg critical" id="modalSeverityBadge">LEVEL 3 - CRITICAL EMERGENCY</span>
+        </div>
+
+        <p class="modal-desc" id="modalDesc">
+          AI Risk Score 87.4% [RISING TRAJECTORY]. Cumulative 7-day rainfall 418mm. High probability of major slope failure within 3-6 hours.
+        </p>
+
+        <div class="dispatch-steps">
+          <div class="disp-step active"><i class="fa-solid fa-tower-broadcast"></i> Cell Broadcast (SMS to 12,800 mobiles within tower cells)</div>
+          <div class="disp-step active"><i class="fa-solid fa-volume-high"></i> BRO Smart Highway Siren Sounding (Sevoke & 29th Mile)</div>
+          <div class="disp-step active"><i class="fa-solid fa-server"></i> NDMA Sachet National Disaster Database (CAP XML payload dispatched)</div>
+          <div class="disp-step active"><i class="fa-solid fa-signs-post"></i> Digital Variable Message Signs (VMS) on Highway Diverting Traffic</div>
+        </div>
+
+        <div class="modal-actions-bar">
+          <button class="btn btn-outline" id="btnSoundSiren">
+            <i class="fa-solid fa-volume-high"></i> <span id="sirenBtnText">Test Audio Siren</span>
+          </button>
+          <button class="btn btn-primary" id="btnDownloadCap">
+            <i class="fa-solid fa-file-code"></i> Download CAP XML
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Toast -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- App Script -->
+  <script src="js/app.js"></script>
+</body>
+</html>
